@@ -1,0 +1,20 @@
+#!/bin/bash
+sed -i 's/BOOTPROTO=none/BOOTPROTO=static/; s/BOOTPROTO=dhcp/BOOTPROTO=static/; s/ONBOOT=no/ONBOOT=yes/' /etc/sysconfig/network-scripts/ifcfg-enp0s3
+echo -e "IPADDR=192.168.1.10\nNETMASK=255.255.255.0\nGATEWAY=192.168.1.1" | tee -a /etc/sysconfig/network-scripts/ifcfg-enp0s3
+service network restart
+sed -i 's/#Port 22/Port 22222/; s/#PermitRootLogin yes/PermitRootLogin no/; s/#UseDNS yes/UseDNS no' /etc/ssh/sshd_config
+firewall-cmd --permanent --add-port=22222/tcp
+firewall-cmd --reload
+yum install -y policycoreutils-python
+semanage port -a -t ssh_port_t -p tcp 22222
+service sshd restart
+
+yum install -y yum-utils device-mapper-persistent-data lvm2
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+yum install docker-ce
+systemctl enable docker
+systemctl start docker
+docker pull php:7.4-apache
+docker volume create apache-data
+ln -s /var/lib/docker/volumes/apache-data/_data/apache
+docker run -d --name apache-php -p 80:80 -v apache-data:/var/www/html php:7.4-apache

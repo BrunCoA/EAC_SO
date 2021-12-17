@@ -1,0 +1,9 @@
+
+sed -i 's/BOOTPROTO=none/BOOTPROTO=dhcp/; s/ONBOOT=no/ONBOOT=yes/' /etc/sysconfig/network-scripts/ifcfg-enp0s3
+service network restart
+sed -i 's/#Port 22/Port 22222/; s/#PermitRootLogin yes/PermitRootLogin no/; s/#UseDNS yes/UseDNS no' /etc/ssh/sshd_config
+firewall-cmd --permanent --add-port=22222/tcp
+firewall-cmd --reload
+yum install -y policycoreutils-python
+semanage port -a -t ssh_port_t -p tcp 22222
+service sshd restart
